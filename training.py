@@ -22,12 +22,18 @@ def create_model():
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
 
+        # Fourth convolution block
+        keras.layers.Conv2D(256, (3, 3), padding='same'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Activation('relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+
         # Flatten and dense layers
         keras.layers.Flatten(),
         keras.layers.Dense(128, activation='relu'),
         keras.layers.Dropout(0.3),
         keras.layers.Dense(10, activation='softmax')
-        ])
+    ])
 
     model.compile(optimizer='adam',
                 loss=tf.keras.losses.SparseCategoricalCrossentropy(),
@@ -54,7 +60,7 @@ if __name__ == "__main__":
     # Display the model's architecture
     model.summary()
 
-    BATCH_SIZE = 64
+    BATCH_SIZE = 128
     EPOCHS = 20
 
     model.fit(train_images, train_labels, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_split=0.1)
