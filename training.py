@@ -1,5 +1,9 @@
 import tensorflow as tf
 from tensorflow import keras
+from sklearn.model_selection import train_test_split
+
+BATCH_SIZE = 128
+EPOCHS = 15
 
 def create_model():
     model = tf.keras.Sequential([
@@ -41,18 +45,33 @@ def create_model():
 
     return model
 
+def create_gen():
+
+    gen = keras.preprocessing.image.ImageDataGenerator(
+        rotation_range=30,  # degrees
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True, # pictures may be mirrored
+    )
+
+    return gen
+
 if __name__ == "__main__":
 
     # Load dataset
     (train_images, train_labels), (test_images, test_labels) = keras.datasets.fashion_mnist.load_data()
 
-    print("Size of train_images: ", train_images.shape)
+    # Split the train data into train & validation data
+    train_images, val_images, train_labels, val_labels = train_test_split(
+        train_images, train_labels,
+        test_size=0.15,
+        random_state=41
+    )
 
     train_images = train_images.reshape(-1, 28, 28, 1) / 255.0
+    val_images = val_images.reshape(-1, 28, 28, 1) / 255.0
     test_images = test_images.reshape(-1, 28, 28, 1) / 255.0
-
-    train_labels = train_labels
-    test_labels = test_labels
 
     # Create a basic model instance
     model = create_model()
@@ -60,10 +79,24 @@ if __name__ == "__main__":
     # Display the model's architecture
     model.summary()
 
-    BATCH_SIZE = 128
-    EPOCHS = 20
+    # Create a generator that applies rotation effect, shift effect, etc.
+    gen = create_gen()
 
-    model.fit(train_images, train_labels, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_split=0.1)
+    checkpoint_filepath = './best_model.keras'
+    checkpoint_callback = keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True,
+        verbose=1
+    )
+
+    model.fit(
+        gen.flow(train_images, train_labels, batch_size=BATCH_SIZE),
+        epochs=EPOCHS,
+        validation_data=(val_images, val_labels),
+        callbacks=[checkpoint_callback]
+    )
 
     # Save the parameters of the model
     model.save('my_model.keras')
