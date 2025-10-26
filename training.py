@@ -1,15 +1,23 @@
 import tensorflow as tf
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
+import numpy as np
 
-BATCH_SIZE = 128
-EPOCHS = 15
+IMG_HEIGHT = 28
+IMG_WIDTH = 28
+
+BATCH_SIZE = 128    # large batch size reduces overfitting
+BUFFER_SIZE = 7000  # large buffer size helps shuffle randomly but may cause high memory usage
+EPOCHS = 15         # number of iterations that allows the model to refine itself
 
 def create_model():
     model = tf.keras.Sequential([
 
+        # The input layer
+        keras.Input(shape=(IMG_HEIGHT, IMG_WIDTH, 1)),
+
         # First convolution block
-        keras.layers.Conv2D(32, (3, 3), padding='same', input_shape=(28, 28, 1)),
+        keras.layers.Conv2D(32, (3, 3), padding='same'),
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
@@ -69,19 +77,31 @@ if __name__ == "__main__":
         random_state=41
     )
 
-    train_images = train_images.reshape(-1, 28, 28, 1) / 255.0
-    val_images = val_images.reshape(-1, 28, 28, 1) / 255.0
-    test_images = test_images.reshape(-1, 28, 28, 1) / 255.0
+    # Normalize the images
+    train_images = train_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1) / 255.0
+    val_images = val_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1) / 255.0
+    test_images = test_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1) / 255.0
+
+    # Change the label type
+    train_labels = train_labels.astype(np.int32)
+    val_labels = val_labels.astype(np.int32)
+    test_labels = test_labels.astype(np.int32)
+
+    # Create dataset
+    train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels)).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+    val_ds = tf.data.Dataset.from_tensor_slices((val_images, val_labels)).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+    test_ds = tf.data.Dataset.from_tensor_slices((test_images, test_labels)).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
     # Create a basic model instance
     model = create_model()
 
-    # Display the model's architecture
-    model.summary()
+    # # Display the model's architecture
+    # model.summary()
 
     # Create a generator that applies rotation effect, shift effect, etc.
     gen = create_gen()
 
+    # Create checkpoint callback
     checkpoint_filepath = './best_model.keras'
     checkpoint_callback = keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
@@ -91,10 +111,11 @@ if __name__ == "__main__":
         verbose=1
     )
 
+    # Train the model
     model.fit(
-        gen.flow(train_images, train_labels, batch_size=BATCH_SIZE),
+        train_ds,
         epochs=EPOCHS,
-        validation_data=(val_images, val_labels),
+        validation_data=val_ds,
         callbacks=[checkpoint_callback]
     )
 
