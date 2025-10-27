@@ -12,36 +12,54 @@ EPOCHS = 30         # number of iterations that allows the model to refine itsel
 def create_model():
     """Creates a model"""
     model = tf.keras.Sequential([
-
-        # The input layer
+        # Input layer
         keras.Input(shape=(IMG_HEIGHT, IMG_WIDTH, 1)),
 
-        # First convolution block
-        keras.layers.Conv2D(32, (3, 3), padding='same'),
+        # First convolution block - increased filters
+        keras.layers.Conv2D(64, (3, 3), padding='same'),
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
-        keras.layers.MaxPooling2D((2, 2)),
-
-        # Second convolution block
         keras.layers.Conv2D(64, (3, 3), padding='same'),
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Dropout(0.25),
 
-        # Third convolution block
+        # Second convolution block
+        keras.layers.Conv2D(128, (3, 3), padding='same'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Activation('relu'),
         keras.layers.Conv2D(128, (3, 3), padding='same'),
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Dropout(0.25),
+
+        # Third convolution block
+        keras.layers.Conv2D(256, (3, 3), padding='same'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Activation('relu'),
+        keras.layers.Conv2D(256, (3, 3), padding='same'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Activation('relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Dropout(0.25),
 
         # Flatten and dense layers
         keras.layers.Flatten(),
+        keras.layers.Dense(256, activation='relu'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.5),
         keras.layers.Dense(128, activation='relu'),
-        keras.layers.Dropout(0.45),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.5),
         keras.layers.Dense(10, activation='softmax')
     ])
 
-    model.compile(optimizer='adam',
+    # Optimizer
+    optimizer = keras.optimizers.Adam(learning_rate=0.001)
+
+    model.compile(optimizer=optimizer,
                 loss=tf.keras.losses.SparseCategoricalCrossentropy(),
                 metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
