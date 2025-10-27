@@ -1,16 +1,16 @@
 import tensorflow as tf
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
-import numpy as np
 
 IMG_HEIGHT = 28
 IMG_WIDTH = 28
 
 BATCH_SIZE = 128    # large batch size reduces overfitting
 BUFFER_SIZE = 7000  # large buffer size helps shuffle randomly but may cause high memory usage
-EPOCHS = 15         # number of iterations that allows the model to refine itself
+EPOCHS = 30         # number of iterations that allows the model to refine itself
 
 def create_model():
+    """Creates a model"""
     model = tf.keras.Sequential([
 
         # The input layer
@@ -34,16 +34,10 @@ def create_model():
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
 
-        # Fourth convolution block
-        keras.layers.Conv2D(256, (3, 3), padding='same'),
-        keras.layers.BatchNormalization(),
-        keras.layers.Activation('relu'),
-        keras.layers.MaxPooling2D((2, 2)),
-
         # Flatten and dense layers
         keras.layers.Flatten(),
         keras.layers.Dense(128, activation='relu'),
-        keras.layers.Dropout(0.3),
+        keras.layers.Dropout(0.45),
         keras.layers.Dense(10, activation='softmax')
     ])
 
@@ -53,17 +47,45 @@ def create_model():
 
     return model
 
-def create_gen():
+def create_pipeline():
+    """Creates a pipeline for preprocessing"""
+    pipeline = tf.keras.Sequential([
 
-    gen = keras.preprocessing.image.ImageDataGenerator(
-        rotation_range=30,  # degrees
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        zoom_range=0.1,
-        horizontal_flip=True, # pictures may be mirrored
-    )
+        # The input layer
+        keras.Input(shape=(IMG_HEIGHT, IMG_WIDTH, 1)),
 
-    return gen
+        # The effects
+        keras.layers.RandomRotation(factor=0.02),
+        keras.layers.RandomZoom(
+            height_factor=0.2, # people often zoom out to look taller
+            width_factor=-0.2,  # people often zoom in to look slimmer
+        ),
+        keras.layers.RandomTranslation(
+            height_factor=0.15,
+            width_factor=0.15,
+            fill_mode='nearest' # the input is extended to the nearest pixel
+        ),
+        keras.layers.RandomFlip("horizontal"),  # pictures may be mirrored
+    ])
+
+    return pipeline
+
+def preprocessing(img, label, pipeline):
+    """Preprocesses the images with the given pipeline
+
+    Keyword arguments:
+    img -- image
+    label -- label
+    pipeline -- the pipeline in Keras sequential model format
+    """
+
+    img = tf.cast(img, dtype=tf.float32)
+
+    img = pipeline(img)
+
+    img = img / 255.0
+
+    return img, label
 
 if __name__ == "__main__":
 
@@ -77,18 +99,26 @@ if __name__ == "__main__":
         random_state=41
     )
 
+    # Reshape the images
+    train_images = train_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1)
+    val_images = val_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1)
+    test_images = test_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1)
+
+    # Create a pipeline for preprocessing
+    pipeline = create_pipeline()
+
     # Normalize the images
-    train_images = train_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1) / 255.0
-    val_images = val_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1) / 255.0
-    test_images = test_images.reshape(-1, IMG_HEIGHT, IMG_WIDTH, 1) / 255.0
+    val_images = val_images / 255.0
+    test_images = test_images / 255.0
 
-    # Change the label type
-    train_labels = train_labels.astype(np.int32)
-    val_labels = val_labels.astype(np.int32)
-    test_labels = test_labels.astype(np.int32)
-
-    # Create dataset
-    train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels)).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+    # Create datasets
+    train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels)) \
+        .shuffle(BUFFER_SIZE) \
+        .map(
+            lambda img, label: preprocessing(img, label, pipeline)  # preprocess w/ the pipeline specified earlier
+            , num_parallel_calls=tf.data.AUTOTUNE) \
+        .batch(BATCH_SIZE) \
+        .prefetch(tf.data.AUTOTUNE)
     val_ds = tf.data.Dataset.from_tensor_slices((val_images, val_labels)).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     test_ds = tf.data.Dataset.from_tensor_slices((test_images, test_labels)).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
@@ -97,9 +127,6 @@ if __name__ == "__main__":
 
     # # Display the model's architecture
     # model.summary()
-
-    # Create a generator that applies rotation effect, shift effect, etc.
-    gen = create_gen()
 
     # Create checkpoint callback
     checkpoint_filepath = './best_model.keras'
@@ -111,17 +138,27 @@ if __name__ == "__main__":
         verbose=1
     )
 
+    # Create early stopping callback
+    early_stopping_callback = keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=3,         # stops when there is no improvement after this number of epochs
+        start_from_epoch=5, # number of epochs to wait before monitoring
+    )
+
     # Train the model
-    model.fit(
+    history = model.fit(
         train_ds,
         epochs=EPOCHS,
         validation_data=val_ds,
-        callbacks=[checkpoint_callback]
+        callbacks=[checkpoint_callback, early_stopping_callback]
     )
-
-    # Save the parameters of the model
-    model.save('my_model.keras')
 
     # Evaluate the accuracy of the model
     loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
     print(f"Test Accuracy: {accuracy:.4f}")
+
+    print(f"Number of epochs ran: {len(history.history['val_loss'])}")
+
+    # Save the parameters of the model
+    if accuracy > 0.85:
+        model.save('my_model.keras')
