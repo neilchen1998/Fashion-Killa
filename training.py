@@ -75,12 +75,12 @@ def create_pipeline():
         # The effects
         keras.layers.RandomRotation(factor=0.02),
         keras.layers.RandomZoom(
-            height_factor=0.2, # people often zoom out to look taller
-            width_factor=-0.2,  # people often zoom in to look slimmer
+            height_factor=0.1, # people often zoom out to look taller
+            width_factor=-0.1,  # people often zoom in to look slimmer
         ),
         keras.layers.RandomTranslation(
-            height_factor=0.15,
-            width_factor=0.15,
+            height_factor=0.1,
+            width_factor=0.1,
             fill_mode='nearest' # the input is extended to the nearest pixel
         ),
         keras.layers.RandomFlip("horizontal"),  # pictures may be mirrored
