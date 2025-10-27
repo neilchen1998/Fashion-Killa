@@ -115,7 +115,7 @@ if __name__ == "__main__":
     train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels)) \
         .shuffle(BUFFER_SIZE) \
         .map(
-            lambda img, label: preprocessing(img, label, pipeline)  # preprocess w/ the pipeline specified earlier
+            lambda img, label: preprocessing(img, label, pipeline)  # preprocess using the pipeline specified earlier
             , num_parallel_calls=tf.data.AUTOTUNE) \
         .batch(BATCH_SIZE) \
         .prefetch(tf.data.AUTOTUNE)
@@ -145,12 +145,19 @@ if __name__ == "__main__":
         start_from_epoch=5, # number of epochs to wait before monitoring
     )
 
+    # Create reduce learning rate callback
+    reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss',
+        factor=0.2, # the discount learning rate factor
+        patience=5,
+        min_lr=0.001
+    )
+
     # Train the model
     history = model.fit(
         train_ds,
         epochs=EPOCHS,
         validation_data=val_ds,
-        callbacks=[checkpoint_callback, early_stopping_callback]
+        callbacks=[checkpoint_callback, early_stopping_callback, reduce_lr]
     )
 
     # Evaluate the accuracy of the model
