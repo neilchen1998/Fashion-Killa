@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
+import math
 
 IMG_HEIGHT = 28
 IMG_WIDTH = 28
@@ -105,6 +106,18 @@ def preprocessing(img, label, pipeline):
 
     return img, label
 
+def exponetial_decay(epoch, lr):
+    """Decreases the learning rate exponentially after 10 epochs
+
+    Keyword arguments:
+    epoch -- epoch
+    lr -- the learning rate
+    """
+    if epoch < 10:
+        return lr
+    else:
+        return lr * math.exp(-0.1)
+
 if __name__ == "__main__":
 
     # Load dataset
@@ -170,12 +183,19 @@ if __name__ == "__main__":
         min_lr=0.001
     )
 
+    # Learning rate scheduler
+    scheduler = keras.callbacks.LearningRateScheduler(
+        # declay exponentially after 10 epochs
+        exponetial_decay,
+        verbose=1
+    )
+
     # Train the model
     history = model.fit(
         train_ds,
         epochs=EPOCHS,
         validation_data=val_ds,
-        callbacks=[checkpoint_callback, early_stopping_callback, reduce_lr]
+        callbacks=[checkpoint_callback, early_stopping_callback, reduce_lr, scheduler]
     )
 
     # Evaluate the accuracy of the model
