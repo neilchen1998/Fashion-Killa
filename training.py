@@ -180,9 +180,9 @@ if __name__ == "__main__":
 
     # Create reduce learning rate callback
     reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='val_loss',
-        factor=0.2, # the discount learning rate factor
-        patience=5,
-        min_lr=0.001
+        factor=0.1,     # the discount learning rate factor
+        patience=10,    # number of epochs with no improvement after which learning rate will be reduced
+        min_lr=1e-5
     )
 
     # Learning rate scheduler
@@ -207,6 +207,6 @@ if __name__ == "__main__":
     print(f"Number of epochs ran: {len(history.history['val_loss'])}")
 
     # Save the parameters of the model
-    if accuracy > 0.85:
+    if accuracy > 0.9:
         model.save('my_model.keras')
         print(f"The accuracy rate is: {accuracy:.4f} and the parameters of the model is saved.\n")
