@@ -85,6 +85,8 @@ def create_pipeline():
             fill_mode='nearest' # the input is extended to the nearest pixel
         ),
         keras.layers.RandomFlip("horizontal"),  # pictures may be mirrored
+        keras.layers.RandomBrightness(factor=0.15),  # lighting is different from picture to picture
+        keras.layers.RandomContrast(0.1),
     ])
 
     return pipeline
@@ -207,3 +209,4 @@ if __name__ == "__main__":
     # Save the parameters of the model
     if accuracy > 0.85:
         model.save('my_model.keras')
+        print(f"The accuracy rate is: {accuracy:.4f} and the parameters of the model is saved.\n")
