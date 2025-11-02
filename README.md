@@ -1,8 +1,14 @@
-# Fashion-MNIST
+# Fashion Killa
 
-## Dataset
+## Introduction
 
-In this project, Fashion-MNIST is used.
+The main goal of this project is to develop a robust solution for clothing piece detection-such as shirts, trousers,
+jackets, etc-across a myriad of sources, including but not limited to, professional magazine editorials, online appearal listings,
+online influencer posts.
+
+## Training Dataset
+
+In this project, [Fashion-MNIST](https://www.tensorflow.org/datasets/catalog/fashion_mnist) is used.
 
 ## Models
 
