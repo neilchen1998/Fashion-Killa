@@ -3,6 +3,8 @@ from tensorflow import keras
 from sklearn.model_selection import train_test_split
 import math
 
+from visualizer import plot_training_data
+
 IMG_HEIGHT = 28
 IMG_WIDTH = 28
 
@@ -187,7 +189,7 @@ if __name__ == "__main__":
 
     # Learning rate scheduler
     scheduler = keras.callbacks.LearningRateScheduler(
-        # declay exponentially after 10 epochs
+        # declay exponentially
         exponetial_decay,
         verbose=1
     )
@@ -199,6 +201,9 @@ if __name__ == "__main__":
         validation_data=val_ds,
         callbacks=[checkpoint_callback, early_stopping_callback, reduce_lr, scheduler]
     )
+
+    # Plot the training history
+    plot_training_data(history)
 
     # Evaluate the accuracy of the model
     loss, accuracy = model.evaluate(test_images, test_labels, verbose=0)
