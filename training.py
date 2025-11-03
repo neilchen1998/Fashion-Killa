@@ -194,8 +194,8 @@ if __name__ == "__main__":
     # Create early stopping callback
     early_stopping_callback = keras.callbacks.EarlyStopping(
         monitor='val_loss',
-        patience=3,         # stops when there is no improvement after this number of epochs
-        start_from_epoch=5, # number of epochs to wait before monitoring
+        patience=5,         # stops when there is no improvement after this number of epochs
+        start_from_epoch=10, # number of epochs to wait before monitoring
     )
 
     # Create reduce learning rate callback
