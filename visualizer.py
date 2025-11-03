@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 def plot_training_data(history):
     """Plot the training history
@@ -29,6 +30,7 @@ def plot_training_data(history):
     plt.plot(epochs, val_acc, 'ro-', label="Validation Accuracy")
     plt.title('Training and Validation Accuracy')
     plt.xlabel('Epochs')
+    plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
     plt.ylabel('Accuracy')
     plt.legend()
 
@@ -38,6 +40,7 @@ def plot_training_data(history):
     plt.plot(epochs, val_loss, 'ro-', label="Validation loss")
     plt.title('Training and Validation loss')
     plt.xlabel('Epochs')
+    plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
     plt.ylabel('loss')
     plt.legend()
 
