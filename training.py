@@ -22,6 +22,7 @@ from visualizer import plot_training_data
 IMG_HEIGHT = 28
 IMG_WIDTH = 28
 
+DROPOUT_RATE = 0.5  # dropout rate of the layers
 BATCH_SIZE = 128    # large batch size reduces overfitting
 BUFFER_SIZE = 7000  # large buffer size helps shuffle randomly but may cause high memory usage
 EPOCHS = 30         # number of iterations that allows the model to refine itself
@@ -40,7 +41,7 @@ def create_model():
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Dropout(0.25),
+        keras.layers.Dropout(DROPOUT_RATE),
 
         # Second convolution block
         keras.layers.Conv2D(128, (3, 3), padding='same'),
@@ -50,7 +51,7 @@ def create_model():
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Dropout(0.25),
+        keras.layers.Dropout(DROPOUT_RATE),
 
         # Third convolution block
         keras.layers.Conv2D(256, (3, 3), padding='same'),
@@ -60,16 +61,19 @@ def create_model():
         keras.layers.BatchNormalization(),
         keras.layers.Activation('relu'),
         keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Dropout(0.25),
+        keras.layers.Dropout(DROPOUT_RATE),
 
         # Flatten and dense layers
         keras.layers.Flatten(),
         keras.layers.Dense(256, activation='relu'),
         keras.layers.BatchNormalization(),
-        keras.layers.Dropout(0.5),
+        keras.layers.Dropout(DROPOUT_RATE),
         keras.layers.Dense(128, activation='relu'),
         keras.layers.BatchNormalization(),
-        keras.layers.Dropout(0.5),
+        keras.layers.Dropout(DROPOUT_RATE),
+        keras.layers.Dense(64, activation='relu'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(DROPOUT_RATE),
         keras.layers.Dense(10, activation='softmax')
     ])
 
