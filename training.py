@@ -107,6 +107,7 @@ def create_pipeline():
         keras.layers.RandomFlip("horizontal"),  # pictures may be mirrored
         keras.layers.RandomBrightness(factor=0.15),  # lighting is different from picture to picture
         keras.layers.RandomContrast(0.1),
+        keras.layers.Rescaling(scale=1./255),
     ])
 
     return pipeline
@@ -123,8 +124,6 @@ def preprocessing(img, label, pipeline):
     img = tf.cast(img, dtype=tf.float32)
 
     img = pipeline(img)
-
-    img = img / 255.0
 
     return img, label
 
