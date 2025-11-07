@@ -25,7 +25,7 @@ IMG_WIDTH = 28
 DROPOUT_RATE = 0.5  # dropout rate of the layers
 BATCH_SIZE = 128    # large batch size reduces overfitting
 BUFFER_SIZE = 7000  # large buffer size helps shuffle randomly but may cause high memory usage
-EPOCHS = 30         # number of iterations that allows the model to refine itself
+EPOCHS = 40         # number of iterations that allows the model to refine itself
 
 def create_model():
     """Creates a model"""
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     # Create early stopping callback
     early_stopping_callback = keras.callbacks.EarlyStopping(
         monitor='val_loss',
-        patience=5,         # stops when there is no improvement after this number of epochs
+        patience=3,         # stops when there is no improvement after this number of epochs
         start_from_epoch=10, # number of epochs to wait before monitoring
     )
 
@@ -230,6 +230,6 @@ if __name__ == "__main__":
     print(f"Number of epochs ran: {len(history.history['val_loss'])}")
 
     # Save the parameters of the model
-    if accuracy > 0.9:
+    if accuracy >= 0.89:
         model.save('my_model.keras')
         print(f"The accuracy rate is: {accuracy:.4f} and the parameters of the model is saved.\n")
